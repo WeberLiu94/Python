@@ -1,0 +1,395 @@
+def feature(trace_data):
+    import pandas as pd
+    import numpy as np
+    import math
+    #解析原始数据
+    trace_data=trace_data.split(" ")
+    trace_frame=pd.DataFrame([trace_data],columns=['id' , 'data' , 'target','label'])
+    train_data=trace_frame.data.values+trace_frame.target.values
+    train_data=train_data[0]
+    orbit_data = []
+    x_cordinate = []
+    y_cordinate = []
+    time_sequence=[]
+
+    oribit=train_data.split(";")[:-1]
+    target=train_data.split(";")[-1]
+    frame_index=[]
+    for i in range(len(oribit)):
+        temp_orbit=oribit[i]
+        temp_float=[]
+        #print(temp_orbit)
+        for j in range(len(temp_orbit.split(","))): 
+
+            temp_float.append(float(temp_orbit.split(",")[j]))
+
+        orbit_data.append(temp_float)
+        x_cordinate.append(temp_float[0])
+        y_cordinate.append(temp_float[1])
+        time_sequence.append(temp_float[2])
+
+    target_cordinate=[0]*2
+    target_cordinate[0]=float(target.split(",")[0])
+    target_cordinate[1]=float(target.split(",")[1])
+   
+    #提取速度相关的特征
+    speed_data=[]  #每段平均速率
+    stop_times=[]        #每条曲线的停止时间
+    speed_data_x=[]      #X方向上的速度
+    speed_data_y=[]      #Y方向上的速度
+    distance_total_list=[]
+    time_total_list=[]
+    time_delta_list=[]   #时间变化序列
+    orbit_number_list=[] #轨迹的点数
+
+    orbit_number_list.append(len(orbit_data))
+    #三个额外的指标 7/10号增加
+    S=[] #路程与位移之比
+    TCM=[] 
+    SC=[]
+    
+   
+        
+
+    if(len(orbit_data)<2): #如果点数小于2个，直接将速度变为0
+        speed_data.append(0)
+        speed_data_x.append(0)
+        speed_data_y.append(0)
+        stop_times.append(0)
+        time_total_list.append(0)
+        time_delta_list.append(0)
+        distance_total_list.append(0)
+        S.append(0)
+        TCM.append(0)
+        SC.append(0)
+    elif(len(orbit_data)>=2):
+        distance_total=0
+        stoptime=0
+        time_dot_distance=0
+        time_pow_2_dot_distance=0
+        time_total=time_sequence[-1]-time_sequence[0]
+        weiyi=math.sqrt((y_cordinate[-1]-y_cordinate[0])**2+(x_cordinate[-1]-x_cordinate[0])**2)
+        for i in range(len(orbit_data)-1):
+            distance=math.sqrt((y_cordinate[i+1]-y_cordinate[i])**2+(x_cordinate[i+1]-x_cordinate[i])**2) #每段的距离
+            time_dot_distance=time_dot_distance+distance*time_sequence[i+1] #每段距离与距离的目标的时间乘积
+            time_pow_2_dot_distance=time_pow_2_dot_distance+distance*time_sequence[i+1]**2 #每段距离与距离的目标的时间的平方乘积
+            distance_x=x_cordinate[i+1]-x_cordinate[i]
+            distance_y=y_cordinate[i+1]-y_cordinate[i]
+            distance_total= distance+ distance_total #每条曲线的总距离
+            delta_t=time_sequence[i+1]-time_sequence[i] #时间间隔
+            time_delta_list.append(delta_t) #获取时间间隔序列
+
+            if(delta_t==0):
+                stoptime=stoptime+1
+                speed_data.append(0)
+                speed_data_x.append(0)
+                speed_data_y.append(0)
+            elif(delta_t!=0):
+                speed_data.append(distance/delta_t)
+                speed_data_x.append(distance_x/delta_t)
+                speed_data_y.append(distance_x/delta_t)
+        if(distance_total!=0):
+            S.append(weiyi/distance_total) #7.10新增
+            TCM.append(time_dot_distance/distance_total) #7.10新增
+            SC.append(time_pow_2_dot_distance/distance_total-TCM[0]**2)#7.10新增
+        else:
+            S.append(0)
+            TCM.append(0)
+            SC.append(0)
+        distance_total_list.append(distance_total)
+        time_total_list.append(time_total)
+        stop_times.append(stoptime)
+    if(len(speed_data)==1):
+        speed_diff=np.array([0])
+    else:
+        speed_diff=np.array(np.diff(speed_data,1))
+    
+    #平均速度差集特征
+    speed_diff_feature=[
+    speed_diff.max(),
+    speed_diff.min(),
+    speed_diff.mean(), 
+    speed_diff.std()
+    ]
+    
+    #平均速度统计特征
+    speed_data=np.array(speed_data)
+    speed_data_feature=[
+    speed_data.min()   #有最小平均速度
+    ,speed_data.max()   #最大平均速度
+    ,speed_data.std()   #平均速度的标准差
+    ,speed_data.mean()#平均值
+    ,stop_times[0]
+    ,distance_total_list[0]
+    ,time_total_list[0]
+    ,orbit_number_list[0]
+    ,S[0]
+    ,TCM[0]
+    ,SC[0]]
+    
+
+    #计算x速率各种指标
+    speed_data_x=np.array(speed_data_x)
+    speed_x_feature=[
+    speed_data_x.min()   #有最小平均速度
+    ,speed_data_x.max()   #最大平均速度
+    ,speed_data_x.std()   #平均速度的标准差
+    ,speed_data_x.mean()#平均值
+    ]
+    
+
+    #计算y速率各种指标
+    speed_data_y=np.array(speed_data_y)
+    speed_y_feature=[
+    speed_data_y.min()   #有最小平均速度
+    ,speed_data_y.max()   #最大平均速度
+    ,speed_data_y.std()   #平均速度的标准差
+    ,speed_data_y.mean()#平均值
+    ]
+    
+    
+    
+
+    #计算时间连续性各种指标
+    time_delta_list=pd.Series(time_delta_list)
+    time_delta_feature=[
+    time_delta_list.min()   #有最小平均速度
+    ,time_delta_list.max()   #最大平均速度
+    ,time_delta_list.std()   #平均速度的标准差
+    ,time_delta_list.mean()#平均值
+    ]
+    
+
+    #提取角度相关的特征
+    angle_data=[] #角度变化特征
+    angle_bigger_90_count=[]
+    Curvatute_rate=[]
+    height_by_distance=[]
+    
+    if(len(orbit_data)<3):#如果轨迹坐标小于3个，角度变化为0
+        angle_data.append(0)
+        angle_bigger_90_count.append(0)
+        Curvatute_rate.append(0)
+        height_by_distance.append(0)
+        k_list=pd.Series([0])
+        k_list_diff=pd.Series([0])
+    elif(len(orbit_data)>=3):
+        angle_count=0
+        for j in range(0,len(orbit_data)-2):
+            delta_x_last=x_cordinate[j+2]-x_cordinate[j+1]
+            delta_y_last=y_cordinate[j+2]-y_cordinate[j+1]
+            delta_x_former=x_cordinate[j+1]-x_cordinate[j]
+            delta_y_former=y_cordinate[j+1]-y_cordinate[j]
+            delta_x_AC=x_cordinate[j+2]-x_cordinate[j]
+            delta_y_AC=y_cordinate[j+2]-y_cordinate[j]
+            a=np.squeeze([delta_x_former,delta_y_former]) #向量AB
+            c=np.squeeze([delta_x_last,delta_y_last])#向量BC
+            b=np.squeeze([delta_x_AC,delta_y_AC])#向量AC
+            b_abs=np.sum(b**2)**0.5
+            if(b_abs!=0):
+                result=(a/b_abs)-np.dot(np.dot(a,b),b)/b_abs**3
+                result_abs=np.sum(result**2)**0.5
+                height_by_distance.append(result_abs)
+            else:
+                height_by_distance.append(0)
+            distance=math.sqrt((y_cordinate[j+2]-y_cordinate[j])**2+(x_cordinate[j+2]-x_cordinate[j])**2) #每段弧度终点与起点的距离
+            if(delta_x_last==0 and delta_x_last==0):
+                angle_data.append(0)
+                Curvatute_rate.append(0)
+            elif(delta_x_former==0 and delta_y_former==0):
+                angle_data.append(0)
+                Curvatute_rate.append(0)
+            else:
+                vector=delta_x_last*delta_x_former+delta_y_last*delta_y_former 
+                distance_last=math.sqrt(delta_x_last**2+delta_y_last**2)
+                distance_former=math.sqrt(delta_x_former**2+delta_y_former**2)
+                angle_cos=round(vector/(distance_last*distance_former),2)
+                if(distance!=0):
+                    Curvatute_rate.append(angle_cos/distance)
+                else:
+                    Curvatute_rate.append(0)
+                angle_data.append(math.degrees(math.acos(angle_cos)))
+                if(math.degrees(math.acos(angle_cos))>=90):
+                    angle_count=angle_count+1
+            
+        angle_bigger_90_count.append(angle_count)
+
+        k_list=np.array([np.log1p((orbit_data[i+1][1] - orbit_data[i][1])) - np.log1p((orbit_data[i+1][0] - orbit_data[i][0])) for i in range(len(orbit_data)-1)])   
+        if(len(k_list)==1):
+            k_list_diff=np.array([0])
+        else:
+            k_list_diff=np.diff(k_list,1) #斜率特征
+    angle_feature=np.array(angle_data)
+    
+    Curvatute_rate_feature=np.array(Curvatute_rate)
+    if(len(Curvatute_rate_feature)==1):
+        Curvatute_rate_feature_diff=np.array([0])
+    else:
+        Curvatute_rate_feature_diff=np.diff(Curvatute_rate_feature,1)
+    
+    height_by_distance_feature=np.array(height_by_distance)
+    if(len(Curvatute_rate_feature)==1):
+        height_by_distance_feature_diff=np.array([0])
+    else:
+        height_by_distance_feature_diff=np.diff(height_by_distance_feature,1)
+    
+    angle_frame=[   #有最小平均速度
+    angle_feature.max()   #最大平均速度
+    ,angle_feature.std()   #平均速度的标准
+    ,angle_bigger_90_count[0]
+    ,Curvatute_rate_feature.max()   #
+    ,Curvatute_rate_feature.min() 
+    ,Curvatute_rate_feature.mean()
+    ,Curvatute_rate_feature.std()   #
+    ,Curvatute_rate_feature_diff.max()   #
+    ,Curvatute_rate_feature_diff.min() 
+    ,Curvatute_rate_feature_diff.mean()
+    ,Curvatute_rate_feature_diff.std()   ##
+    ,height_by_distance_feature.max()   #
+    ,height_by_distance_feature.min() 
+    ,height_by_distance_feature.mean()
+    ,height_by_distance_feature.std()   #
+    ,height_by_distance_feature_diff.max()   #
+    ,height_by_distance_feature_diff.min()
+    ,height_by_distance_feature_diff.mean()
+    ,height_by_distance_feature_diff.std()   ##
+    ,]
+    
+
+    k_list_diff_feature=np.array(k_list_diff)   
+    k_list_diff_frame=[   #有最小平均速度
+    k_list_diff_feature.max()   #最大平均速度
+    ,k_list_diff_feature.std()   #平均速度的标准差
+    ]
+           
+
+    distance_to_moveline=[]
+    cross_midline_time=[] #提取超过中线的方向变换次数
+    distance_up_line=[]
+    distance_fbs=[]
+    distance_up_and_below=[]
+    if(len(y_cordinate)<3):
+        distance_to_moveline.append(0)
+        cross_midline_time.append(0) #提取超过中线的方向变换次数
+        distance_up_line.append(0)
+        distance_fbs.append(0)
+        distance_up_and_below.append(0)
+    elif(len(y_cordinate)>=3):
+        count=0
+        y0=y_cordinate[0]
+        x0=x_cordinate[0]
+        y_last=y_cordinate[-1]
+        x_last=x_cordinate[-1]
+        A=-(y_last-y0)
+        B=-(x0-x_last)
+        C=-(x_last*y0-x0*y_last)
+        distance=0
+        for j in range(1,len(y_cordinate)-1):
+
+            y1=y_cordinate[j] #计算穿过中线的次数
+            y2=y_cordinate[j+1]
+            if((y1<=y0 and y2>=y0) or (y1>=y0 and y2<=y0)):
+                count=count+1
+            if((A**2+B**2)!=0):
+                distance=(A*x_cordinate[j]+B*y_cordinate[j]+C)/math.sqrt(A**2+B**2)
+                distance_to_moveline.append(distance)
+            else:
+                distance_to_moveline.append(0)
+
+        cross_midline_time.append(count)
+        
+    distance_up_and_below.append(sum(distance_to_moveline))
+    if distance_to_moveline[0] !=0:
+        for j in distance_to_moveline:
+            temp_abs=0
+            temp_up_line=0
+            if(j>=0):
+                temp_up_line=temp_up_line+j
+                temp_abs=temp_abs+math.fabs(j)
+        print(temp_up_line)
+        distance_up_line.append(temp_up_line)
+        distance_fbs.append(temp_abs)
+    else:
+        distance_up_line.append(0)
+        distance_fbs.append(0)
+
+    distance_change_feature=np.array(distance_to_moveline)
+    distance_to_midline_frame=[   #有最小平均速度
+    distance_change_feature.max()   #最大平均速度
+    ,distance_change_feature.std()
+    ,distance_change_feature.mean()#平均速度的标准差
+    ,distance_up_line[0]            #在中线上的点的距离
+    ,distance_fbs[0]                #正负距离绝对值之和
+    ,distance_up_and_below[0]     #正负距离之和
+    ,cross_midline_time[0]
+    ]
+    
+
+    #坐标相关
+    #与目的坐标先关
+    distance_2_target=np.array([x_cordinate[i]-target_cordinate[0] for i in range(len(x_cordinate))])
+    if(len(distance_2_target)==1):
+        distance_2_target_diff=np.array([0])
+    else:
+        distance_2_target_diff=np.diff(distance_2_target,1)
+    
+    distance_final_2_target=[x_cordinate[-1]-target_cordinate[0]]
+    #X坐标相关
+    x_frame=np.array(x_cordinate)
+    if(len(x_frame)==1):
+        x_diff_frame=np.array([0])
+    else:
+        x_diff_frame=np.diff(x_frame,1)
+    
+    #y坐标相关
+    y_frame=np.array(y_cordinate)
+    if(len(y_frame)==1):
+        y_diff_frame=np.array([0])
+    else:
+        y_diff_frame=np.diff(y_frame,1)
+    
+    
+    x_back_num=[]
+    y_back_num=[] 
+    x_back_num.append(min( (x_diff_frame > 0).sum(),(x_diff_frame < 0).sum()))
+    y_back_num.append(min( (y_diff_frame > 0).sum(),(y_diff_frame < 0).sum()))
+    
+    point_frame=[
+    distance_2_target.max()   #最大平均速度
+    ,distance_2_target.min()
+    ,distance_2_target.std()
+    ,distance_2_target.mean()#平均速度的标准差
+    ,distance_final_2_target[0]
+    ,distance_2_target_diff.max()   #最大平均速度
+    ,distance_2_target_diff.min()
+    ,distance_2_target_diff.std()
+    ,distance_2_target_diff.mean()#平均速度的标准差
+    ,x_frame.max()   #最大平均速度
+    ,x_frame.min()
+    ,x_frame.std()
+    ,x_frame.mean()#平均速度的标准差
+    ,x_diff_frame.max()   #最大平均速度
+    ,x_diff_frame.min()
+    ,x_diff_frame.std()
+    ,x_diff_frame.mean()#平均速度的标准差
+    ,y_frame.max()   #最大平均速度
+    ,y_frame.min()
+    ,y_frame.std()
+    ,y_frame.mean()#平均速度的标准差
+    ,y_diff_frame.max()   #最大平均速度
+    ,y_diff_frame.min()
+    ,y_diff_frame.std()
+    ,y_diff_frame.mean()#平均速度的标准差
+    ,x_back_num[0]
+    ,y_back_num[0]]
+    
+    feature_array=(speed_diff_feature+speed_data_feature+speed_x_feature+speed_y_feature+ time_delta_feature+angle_frame
+            +k_list_diff_frame+distance_to_midline_frame+point_frame)
+    feature_array=np.where(np.isnan(feature_array),-999,feature_array)
+    feature_array=np.where(np.isinf(feature_array),99999,feature_array)
+    feature_list=['{}:{}'.format(i+1,j) for i, j in enumerate(feature_array)]
+    feature_list=[str(trace_frame.label.values[0])]+feature_list
+    feature_list=' '.join(feature_list)
+    return feature_list
+
+    
