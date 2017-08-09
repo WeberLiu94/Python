@@ -1,4 +1,4 @@
-#提取速度相关的特征
+    #提取速度相关的特征
     speed_data=[]  #每段平均速率
     stop_times=[]        #每条曲线的停止时间
     speed_data_x=[]      #X方向上的速度
@@ -74,8 +74,11 @@
     speed_diff_feature=[
     speed_diff.max(),
     speed_diff.min(),
-    speed_diff.mean(), 
-    speed_diff.std()
+    #speed_diff.mean(), 
+    speed_diff.std(),
+    #st.kurtosis(speed_diff),
+    #st.skew(speed_diff),
+    np.median(speed_diff)
     ]
     
     #平均速度统计特征
@@ -84,7 +87,10 @@
     speed_data.min()   #有最小平均速度
     ,speed_data.max()   #最大平均速度
     ,speed_data.std()   #平均速度的标准差
-    ,speed_data.mean()#平均值
+    ,speed_data.mean()
+    #st.kurtosis(speed_data)
+    #st.skew(speed_data)
+    ,np.median(speed_data)#平均值
     ,stop_times[0]
     ,distance_total_list[0]
     ,time_total_list[0]
@@ -100,8 +106,11 @@
     speed_data_x.min()   #有最小平均速度
     ,speed_data_x.max()   #最大平均速度
     ,speed_data_x.std()   #平均速度的标准差
-    ,speed_data_x.mean()
-    ,np.median(speed_data_x)#平均值
+    #,speed_data_x.mean()
+    ,np.median(speed_data_x)
+    #st.kurtosis(speed_data_x)
+    #st.skew(speed_data_x)
+    #平均值
     ]
     
 
@@ -111,8 +120,10 @@
     speed_data_y.min()   #有最小平均速度
     ,speed_data_y.max()   #最大平均速度
     ,speed_data_y.std()   #平均速度的标准差
-    ,speed_data_y.mean()#平均值
-    ,np.median(speed_data_x)
+    #,speed_data_y.mean()#平均值
+    ,np.median(speed_data_y)
+    #st.kurtosis(speed_data_y)
+    #st.skew(speed_data_y)
     ]
     
     
@@ -124,8 +135,10 @@
     time_delta_list.min()   #有最小平均速度
     ,time_delta_list.max()   #最大平均速度
     ,time_delta_list.std()   #平均速度的标准差
-    ,time_delta_list.mean()
-    ,np.median(time_delta_list)#平均值
+    #,time_delta_list.mean()
+    ,np.median(time_delta_list)
+    #st.kurtosis(time_delta_list)
+    #st.skew(time_delta_list)#平均值
     ]
     
 
@@ -211,29 +224,39 @@
     ,Curvatute_rate_feature.mean()
     ,Curvatute_rate_feature.std()
     ,np.median(Curvatute_rate_feature)#
+    #st.kurtosis(Curvatute_rate_feature)
+    #st.skew(Curvatute_rate_feature)
     ,Curvatute_rate_feature_diff.max()   #
     ,Curvatute_rate_feature_diff.min() 
     ,Curvatute_rate_feature_diff.mean()
     ,Curvatute_rate_feature_diff.std()
     ,np.median(Curvatute_rate_feature_diff)##
+    #st.kurtosis(Curvatute_rate_feature_diff)
+    #st.skew(Curvatute_rate_feature_diff)
     ,height_by_distance_feature.max()   #
     ,height_by_distance_feature.min() 
     ,height_by_distance_feature.mean()
     ,height_by_distance_feature.std()
-    ,np.median(height_by_distance_feature)#
+    ,np.median(height_by_distance_feature)
+    #st.kurtosis(height_by_distance_feature)
+    #st.skew(height_by_distance_feature)#
     ,height_by_distance_feature_diff.max()   #
     ,height_by_distance_feature_diff.min()
     ,height_by_distance_feature_diff.mean()
     ,height_by_distance_feature_diff.std()
-    ,np.median(height_by_distance_feature_diff)##
-    ,]
+    ,np.median(height_by_distance_feature_diff)
+    #st.kurtosis(height_by_distance_feature_diff)
+    #st.skew(height_by_distance_feature_diff)#
+    ]
     
 
     k_list_diff_feature=np.array(k_list_diff)   
     k_list_diff_frame=[   #有最小平均速度
     k_list_diff_feature.max()   #最大平均速度
     ,k_list_diff_feature.std()
-    ,np.median(k_list_diff_feature)#平均速度的标准差
+    ,np.median(k_list_diff_feature)
+    #st.kurtosis(k_list_diff_feature)
+    #st.skew(k_list_diff_feature)##平均速度的标准差
     ]
            
 
@@ -293,6 +316,8 @@
     ,distance_change_feature.std()
     ,distance_change_feature.mean()
     ,np.median(distance_change_feature)#平均速度的标准差
+    #st.kurtosis(distance_change_feature)
+    #st.skew(distance_change_feature)
     ,distance_up_line[0]            #在中线上的点的距离
     ,distance_fbs[0]                #正负距离绝对值之和
     ,distance_up_and_below[0]     #正负距离之和
@@ -335,31 +360,46 @@
     ,distance_2_target.std()
     ,distance_2_target.mean()
     ,np.median(distance_2_target)#平均速度的标准差
+    #st.kurtosis(distance_2_target)
+    #st.skew(distance_2_target)
     ,distance_final_2_target[0]
     ,distance_2_target_diff.max()   #最大平均速度
     ,distance_2_target_diff.min()
     ,distance_2_target_diff.std()
     ,distance_2_target_diff.mean()
     ,np.median(distance_2_target_diff)#平均速度的标准差
+    #st.kurtosis(distance_2_target_diff)
+    #st.skew(distance_2_target_diff)
     ,x_frame.max()   #最大平均速度
     ,x_frame.min()
     ,x_frame.std()
     ,x_frame.mean()
     ,np.median(x_frame)#平均速度的标准差
+    #st.kurtosis(x_frame)
+    #st.skew(x_frame)
     ,x_diff_frame.max()   #最大平均速度
     ,x_diff_frame.min()
     ,x_diff_frame.std()
     ,x_diff_frame.mean()
     ,np.median(x_diff_frame)#平均速度的标准差
+    #st.kurtosis(x_diff_frame)
+    #st.skew(x_diff_frame)
     ,y_frame.max()   #最大平均速度
     ,y_frame.min()
     ,y_frame.std()
     ,y_frame.mean()
     ,np.median(y_frame)#平均速度的标准差
+    #st.kurtosis(y_frame)
+    #st.skew(y_frame)
     ,y_diff_frame.max()   #最大平均速度
     ,y_diff_frame.min()
     ,y_diff_frame.std()
     ,y_diff_frame.mean()
     ,np.median(y_diff_frame)#平均速度的标准差
+    #st.kurtosis(y_diff_frame)
+    #st.skew(y_diff_frame)
     ,x_back_num[0]
     ,y_back_num[0]]
+    
+    feature_array=(speed_diff_feature+speed_data_feature+speed_x_feature+speed_y_feature+ time_delta_feature+angle_frame
+            +k_list_diff_frame+distance_to_midline_frame+point_frame)
